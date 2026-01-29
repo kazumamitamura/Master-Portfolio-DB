@@ -132,9 +132,18 @@ function AdminAuthContent() {
     }
   }
 
-  const handlePasswordReset = async () => {
+  // メールリンク不要：管理者パスワードを直接設定
+  const handleSetPasswordDirect = async () => {
     if (!formData.email || !isAdminEmail(formData.email)) {
       setError('管理者メールアドレスを入力してください。')
+      return
+    }
+    if (!formData.password || formData.password.length < 6) {
+      setError('パスワードは6文字以上である必要があります。')
+      return
+    }
+    if (formData.password !== formData.confirmPassword) {
+      setError('パスワードが一致しません。')
       return
     }
 
@@ -144,15 +153,22 @@ function AdminAuthContent() {
     setShowPasswordReset(false)
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/admin/auth?reset=true&type=recovery`,
+      const res = await fetch('/api/admin/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email.trim(),
+          password: formData.password,
+        }),
       })
+      const data = await res.json()
 
-      if (error) throw error
+      if (!res.ok) throw new Error(data.error || 'パスワードの設定に失敗しました。')
 
-      setSuccess('パスワード設定用のメールを送信しました。メールボックスを確認して、リンクをクリックしてください。')
+      setSuccess('パスワードが設定されました。ログインしてください。')
+      setFormData({ ...formData, password: '', confirmPassword: '' })
     } catch (err: any) {
-      setError(err.message || 'パスワードリセットに失敗しました。')
+      setError(err.message || 'パスワードの設定に失敗しました。')
     } finally {
       setLoading(false)
     }
@@ -229,13 +245,31 @@ function AdminAuthContent() {
           >
             {error}
             {showPasswordReset && (
-              <div className="mt-3">
+              <div className="mt-3 space-y-2">
+                <p className="text-sm font-semibold">パスワードをここで設定（メール不要）</p>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-black"
+                  placeholder="新しいパスワード（6文字以上）"
+                  minLength={6}
+                />
+                <input
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-black"
+                  placeholder="パスワード（確認）"
+                  minLength={6}
+                />
                 <button
                   type="button"
-                  onClick={handlePasswordReset}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-all"
+                  onClick={handleSetPasswordDirect}
+                  disabled={loading || formData.password.length < 6 || formData.password !== formData.confirmPassword}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-all disabled:opacity-50"
                 >
-                  パスワードを設定する（メール送信）
+                  {loading ? '設定中...' : 'パスワードを設定する'}
                 </button>
               </div>
             )}
@@ -400,13 +434,16 @@ function AdminAuthContent() {
 
         {isLogin && (
           <div className="mt-4">
+            <p className="text-sm text-gray-600 mb-2">
+              パスワードが未設定の場合は、下の「パスワードを設定」でメール不要で設定できます。
+            </p>
             <button
               type="button"
-              onClick={handlePasswordReset}
+              onClick={() => setShowPasswordReset(true)}
               disabled={loading || !isAdminEmail(formData.email)}
               className="w-full text-sm text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              パスワードを忘れた場合 / パスワードを設定する
+              パスワードを設定する（メール不要）
             </button>
           </div>
         )}
@@ -414,18 +451,14 @@ function AdminAuthContent() {
         {!isLogin && (
           <div className="mt-4">
             <p className="text-sm text-gray-600 mb-2">
-              既にメールアドレスが登録されている場合は、パスワードリセット機能を使用してください。
+              既にメールアドレスが登録されている場合は、ログイン画面で「パスワードを設定する」からメール不要で設定できます。
             </p>
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(true)
-                handlePasswordReset()
-              }}
-              disabled={loading || !isAdminEmail(formData.email)}
-              className="w-full text-sm text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setIsLogin(true)}
+              className="w-full text-sm text-indigo-600 hover:text-indigo-800 font-medium"
             >
-              パスワードを設定する（既存アカウント用）
+              ログインはこちら
             </button>
           </div>
         )}

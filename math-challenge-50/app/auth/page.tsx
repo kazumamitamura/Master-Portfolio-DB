@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { isStudentEmail, isAdminEmail } from '@/lib/adminUtils'
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true)
@@ -20,12 +21,6 @@ export default function AuthPage() {
   })
   const router = useRouter()
   const supabase = createSupabaseClient()
-  
-  // 管理者メールアドレスかどうかをチェック
-  const isAdminEmail = (email: string) => {
-    const adminEmails = ['mitamuraka@haguroko.ed.jp', 'katoyu@haguroko.ed.jp']
-    return adminEmails.includes(email.toLowerCase().trim())
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -49,6 +44,11 @@ export default function AuthPage() {
         // Sign up - 管理者メールアドレスは登録不可（管理者専用ページを使用）
         if (isAdminEmail(formData.email)) {
           throw new Error('管理者の方は管理者専用ページから登録してください。')
+        }
+
+        // 生徒メールアドレスの形式チェック
+        if (!isStudentEmail(formData.email)) {
+          throw new Error('生徒メールアドレス（s.年度.連番@haguroko.ed.jp）を入力してください。')
         }
 
         // Sign up
@@ -193,8 +193,19 @@ export default function AuthPage() {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
-              placeholder="example@email.com"
+              placeholder="s.2023.0001@haguroko.ed.jp"
             />
+            {formData.email && (
+              <div className="mt-1">
+                {isStudentEmail(formData.email) ? (
+                  <p className="text-xs text-green-600">✓ 生徒メールアドレスとして認識されました</p>
+                ) : isAdminEmail(formData.email) ? (
+                  <p className="text-xs text-orange-600">管理者メールアドレスです。管理者専用ページから登録してください。</p>
+                ) : formData.email.includes('@haguroko.ed.jp') ? (
+                  <p className="text-xs text-red-600">生徒メールアドレス形式（s.年度.連番@haguroko.ed.jp）を入力してください</p>
+                ) : null}
+              </div>
+            )}
           </div>
 
           <div>
