@@ -157,13 +157,22 @@ export default function DashboardPage() {
               {profile?.grade}年生 {profile?.class_name}組
             </p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            ログアウト
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/results"
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+            >
+              <BarChart3 className="w-5 h-5" />
+              成績を見る
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              ログアウト
+            </button>
+          </div>
         </motion.div>
 
         {/* Level Cards */}

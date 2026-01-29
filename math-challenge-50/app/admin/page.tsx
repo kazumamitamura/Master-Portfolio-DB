@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
-import { Download, LogOut, Filter } from 'lucide-react'
+import { Download, LogOut, Filter, Upload } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { formatTime } from '@/lib/utils'
 
@@ -35,6 +35,8 @@ export default function AdminPage() {
     className: '',
     level: '',
   })
+  const [csvUploading, setCsvUploading] = useState(false)
+  const [csvMessage, setCsvMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -133,6 +135,46 @@ export default function AdminPage() {
     router.push('/')
   }
 
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setCsvUploading(true)
+    setCsvMessage(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/admin/upload-csv', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'CSVアップロードに失敗しました')
+      }
+
+      setCsvMessage({
+        type: 'success',
+        text: `${data.updated}件のプロファイルを更新しました。${data.errors ? `エラー: ${data.errors.length}件` : ''}`,
+      })
+
+      // Reload results
+      loadResults()
+    } catch (err: any) {
+      setCsvMessage({
+        type: 'error',
+        text: err.message || 'CSVアップロードに失敗しました',
+      })
+    } finally {
+      setCsvUploading(false)
+      e.target.value = '' // Reset file input
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-600 flex items-center justify-center">
@@ -166,6 +208,46 @@ export default function AdminPage() {
           </button>
         </motion.div>
 
+        {/* CSV Upload */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/20 backdrop-blur rounded-2xl p-6 mb-6"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Upload className="w-5 h-5 text-white" />
+            <h2 className="text-xl font-bold text-white">CSVアップロード</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-all cursor-pointer">
+              <Upload className="w-5 h-5" />
+              CSVファイルを選択
+              <input
+                type="file"
+                accept=".csv,.xlsx,.xls"
+                onChange={handleCsvUpload}
+                disabled={csvUploading}
+                className="hidden"
+              />
+            </label>
+            {csvUploading && <span className="text-white">アップロード中...</span>}
+            {csvMessage && (
+              <div
+                className={`px-4 py-2 rounded-lg ${
+                  csvMessage.type === 'success'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-red-500 text-white'
+                }`}
+              >
+                {csvMessage.text}
+              </div>
+            )}
+          </div>
+          <p className="text-white/80 text-sm mt-2">
+            CSV形式: メールアドレス, 氏名の列を含むファイル（Excel形式も可）
+          </p>
+        </motion.div>
+
         {/* Filters */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -185,9 +267,9 @@ export default function AdminPage() {
                 className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white"
               >
                 <option value="">全て</option>
-                {[1, 2, 3, 4, 5, 6].map((g) => (
+                {[1, 2, 3].map((g) => (
                   <option key={g} value={g.toString()}>
-                    {g}年生
+                    {g}学年
                   </option>
                 ))}
               </select>
@@ -201,9 +283,9 @@ export default function AdminPage() {
                 className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white"
               >
                 <option value="">全て</option>
-                {['A', 'B', 'C', 'D', 'E'].map((c) => (
+                {['LIA', 'LIB', 'L', 'I', 'CA', 'CB', 'CC', 'CD', 'E', 'M', 'A'].map((c) => (
                   <option key={c} value={c}>
-                    {c}組
+                    {c}
                   </option>
                 ))}
               </select>

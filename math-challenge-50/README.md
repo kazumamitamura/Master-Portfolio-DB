@@ -107,12 +107,48 @@ math-challenge-50/
 
 ## デプロイ
 
-### Vercelへのデプロイ
+### GitHubへのプッシュ & Vercelデプロイ
 
-1. [Vercel](https://vercel.com)でアカウントを作成
-2. GitHubリポジトリを接続
-3. 環境変数を設定
-4. デプロイ！
+#### 方法1: PowerShellスクリプトを使用（推奨）
+
+```powershell
+# deploy.ps1を実行
+cd "C:\Users\PC_User\Desktop\アプリ\math-challenge-50\Master-Portfolio-DB\math-challenge-50"
+.\deploy.ps1
+```
+
+#### 方法2: 手動コマンド
+
+```powershell
+# Master-Portfolio-DBディレクトリに移動
+cd "C:\Users\PC_User\Desktop\アプリ\math-challenge-50\Master-Portfolio-DB"
+
+# 変更をステージング
+git add .
+
+# コミット
+git commit -m "Update: 最新の変更"
+
+# GitHubにプッシュ
+git push origin main
+```
+
+#### クイックコマンド（コピー&ペースト用）
+
+```powershell
+cd "C:\Users\PC_User\Desktop\アプリ\math-challenge-50\Master-Portfolio-DB"; git add .; git commit -m "Update: 最新の変更"; git push origin main
+```
+
+### Vercelデプロイの確認
+
+1. **自動デプロイ**: GitHubにプッシュすると、Vercelが自動的にデプロイを開始します
+2. **デプロイ状況の確認**: [Vercel Dashboard](https://vercel.com/dashboard)で確認
+3. **環境変数の確認**: Vercelプロジェクト設定で以下が設定されているか確認：
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+詳細は `DEPLOY_COMMANDS.md` を参照してください。
 
 ## ライセンス
 

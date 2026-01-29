@@ -309,7 +309,7 @@ export default function PlayPage() {
                             type="number"
                             value={answers[index] ?? ''}
                             onChange={(e) => handleAnswerChange(index, e.target.value)}
-                            className="w-full h-full text-center text-lg font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full h-full text-center text-lg font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                             disabled={isComplete}
                           />
                         )}

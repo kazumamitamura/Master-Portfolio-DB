@@ -127,7 +127,7 @@ export default function AuthPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   placeholder="山田 太郎"
                 />
               </div>
@@ -141,11 +141,11 @@ export default function AuthPage() {
                     required
                     value={formData.grade}
                     onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   >
-                    {[1, 2, 3, 4, 5, 6].map((g) => (
+                    {[1, 2, 3].map((g) => (
                       <option key={g} value={g.toString()}>
-                        {g}年生
+                        {g}学年
                       </option>
                     ))}
                   </select>
@@ -159,11 +159,11 @@ export default function AuthPage() {
                     required
                     value={formData.className}
                     onChange={(e) => setFormData({ ...formData, className: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
                   >
-                    {['A', 'B', 'C', 'D', 'E'].map((c) => (
+                    {['LIA', 'LIB', 'L', 'I', 'CA', 'CB', 'CC', 'CD', 'E', 'M', 'A'].map((c) => (
                       <option key={c} value={c}>
-                        {c}組
+                        {c}
                       </option>
                     ))}
                   </select>
@@ -181,7 +181,7 @@ export default function AuthPage() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
               placeholder="example@email.com"
             />
           </div>
@@ -195,7 +195,7 @@ export default function AuthPage() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-black"
               placeholder="••••••••"
               minLength={6}
             />
