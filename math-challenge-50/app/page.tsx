@@ -73,11 +73,12 @@ export default function Home() {
           ))}
         </motion.div>
 
-        {/* CTA Button */}
+        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.8, type: "spring" }}
+          className="flex flex-col md:flex-row items-center justify-center gap-4"
         >
           <Link href="/auth">
             <motion.button
@@ -86,6 +87,15 @@ export default function Home() {
               className="bg-white text-orange-600 text-3xl font-bold px-12 py-6 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 animate-pulse-glow"
             >
               冒険を始める 🚀
+            </motion.button>
+          </Link>
+          <Link href="/admin/auth">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-indigo-600 text-white text-xl font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300"
+            >
+              管理者・教員の方はこちら
             </motion.button>
           </Link>
         </motion.div>

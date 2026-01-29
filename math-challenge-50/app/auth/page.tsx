@@ -20,6 +20,12 @@ export default function AuthPage() {
   })
   const router = useRouter()
   const supabase = createSupabaseClient()
+  
+  // 管理者メールアドレスかどうかをチェック
+  const isAdminEmail = (email: string) => {
+    const adminEmails = ['mitamuraka@haguroko.ed.jp', 'katoyu@haguroko.ed.jp']
+    return adminEmails.includes(email.toLowerCase().trim())
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +46,11 @@ export default function AuthPage() {
           router.push('/dashboard')
         }
       } else {
+        // Sign up - 管理者メールアドレスは登録不可（管理者専用ページを使用）
+        if (isAdminEmail(formData.email)) {
+          throw new Error('管理者の方は管理者専用ページから登録してください。')
+        }
+
         // Sign up
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: formData.email,
@@ -212,7 +223,12 @@ export default function AuthPage() {
           </motion.button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 text-center space-y-2">
+          {isLogin && (
+            <p className="text-sm text-gray-600 mb-2">
+              新規登録は管理者にご連絡ください。
+            </p>
+          )}
           <button
             onClick={() => {
               setIsLogin(!isLogin)
@@ -220,8 +236,21 @@ export default function AuthPage() {
             }}
             className="text-blue-600 hover:text-blue-800 font-medium"
           >
-            {isLogin ? '新規登録はこちら' : 'ログインはこちら'}
+            {isLogin ? '登録について' : 'ログインはこちら'}
           </button>
+          {!isLogin && (
+            <p className="text-sm text-gray-600 mt-2">
+              生徒の新規登録は管理者がCSVファイルで一括登録します。
+              <br />
+              登録が必要な場合は、先生にご連絡ください。
+            </p>
+          )}
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+          <Link href="/admin/auth" className="text-sm text-gray-600 hover:text-gray-900">
+            管理者・教員の方はこちら →
+          </Link>
         </div>
       </motion.div>
     </div>
