@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
-import { Lock, Trophy, Clock, LogOut } from 'lucide-react'
+import { Lock, Trophy, Clock, LogOut, BarChart3 } from 'lucide-react'
 import Link from 'next/link'
 import { formatTime } from '@/lib/utils'
 
