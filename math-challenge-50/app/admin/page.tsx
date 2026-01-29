@@ -120,8 +120,7 @@ export default function AdminPage() {
       { wch: 8 },  // クラス
       { wch: 8 },  // レベル
       { wch: 8 },  // スコア
-      { wch: 10 }, // 正解数
-      { wch: 10 }, // 不正解数
+      { wch: 10 }, // 間違い
       { wch: 12 }, // タイム
     ]
     ws['!cols'] = colWidths
@@ -254,8 +253,7 @@ export default function AdminPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">クラス</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">レベル</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">スコア</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">正解数</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">不正解数</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">間違い</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">タイム</th>
                 </tr>
               </thead>
@@ -287,11 +285,8 @@ export default function AdminPage() {
                       <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                         {result.score} / 50
                       </td>
-                      <td className="px-4 py-3 text-sm text-green-600 font-medium">
-                        {result.correct_count}
-                      </td>
                       <td className="px-4 py-3 text-sm text-red-600 font-medium">
-                        {result.incorrect_count}
+                        {result.mistakes}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {formatTime(result.time_seconds)}
