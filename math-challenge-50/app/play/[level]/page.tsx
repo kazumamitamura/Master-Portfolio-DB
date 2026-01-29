@@ -26,6 +26,7 @@ export default function PlayPage() {
   const [isComplete, setIsComplete] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
   const [showNewRecord, setShowNewRecord] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const inputRefs = useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
@@ -87,10 +88,8 @@ export default function PlayPage() {
     })
     setCorrectCount(correct)
 
-    // Check completion
-    if (newAnswers.every((a) => a !== null)) {
-      checkCompletion(newAnswers)
-    }
+    // Don't auto-complete - user must click finish button
+    // This allows multi-digit input in the last cell
   }
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -133,6 +132,18 @@ export default function PlayPage() {
         }
       }, 200)
     }
+  }
+
+  const handleFinish = async () => {
+    // Check if all cells are filled
+    const allFilled = answers.every((a) => a !== null)
+    if (!allFilled) {
+      alert('すべてのマスに入力してください。')
+      return
+    }
+
+    setIsSaving(true)
+    await checkCompletion(answers)
   }
 
   const checkCompletion = async (finalAnswers: (number | null)[]) => {
@@ -198,18 +209,47 @@ export default function PlayPage() {
 
       // Save result (all scores)
       // Note: Using 'mistakes' instead of 'incorrect_count' to match schema
-      const { error: insertError } = await supabase.from('game_results').insert({
-        user_id: user.id,
-        level,
-        score: correct,
-        time_seconds: timeSeconds,
-        mistakes: incorrect,
-      })
+      try {
+        const { data, error: insertError } = await supabase.from('game_results').insert({
+          user_id: user.id,
+          level,
+          score: correct,
+          time_seconds: timeSeconds,
+          mistakes: incorrect,
+        }).select()
 
-      if (insertError) {
-        console.error('Error saving result:', insertError)
+        if (insertError) {
+          console.error('Error saving result:', insertError)
+          console.error('Error details:', JSON.stringify(insertError, null, 2))
+          alert(`成績の保存に失敗しました: ${insertError.message}\nもう一度お試しください。`)
+          setIsSaving(false)
+          setIsComplete(false) // Allow retry
+          return
+        } else {
+          console.log('Result saved successfully:', { 
+            id: data?.[0]?.id,
+            user_id: user.id,
+            level,
+            score: correct,
+            time_seconds: timeSeconds,
+            mistakes: incorrect 
+          })
+          // Show success message briefly
+          setTimeout(() => {
+            console.log('Score recorded in database')
+          }, 100)
+        }
+      } catch (err) {
+        console.error('Unexpected error saving result:', err)
+        alert('予期しないエラーが発生しました。もう一度お試しください。')
+        setIsSaving(false)
+        setIsComplete(false) // Allow retry
+        return
       }
+    } else {
+      console.warn('No user found, cannot save result')
     }
+    setIsSaving(false)
   }
 
   const getCellAnswer = (row: number, col: number): number | null => {
@@ -376,14 +416,23 @@ export default function PlayPage() {
                             value={answers[index] ?? ''}
                             onChange={(e) => {
                               const value = e.target.value.replace(/[^0-9]/g, '')
-                              if (value === '' || parseInt(value) >= 0) {
+                              // Allow multi-digit numbers (up to 3 digits should be enough)
+                              if (value === '' || (parseInt(value) >= 0 && value.length <= 3)) {
                                 handleAnswerChange(index, value)
                               }
                             }}
-                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            onKeyDown={(e) => {
+                              // Prevent Enter key from submitting on last cell
+                              if (index === 49 && e.key === 'Enter') {
+                                e.preventDefault()
+                                // Don't auto-submit, let user click finish button
+                                return
+                              }
+                              handleKeyDown(index, e)
+                            }}
                             onBlur={() => handleBlur(index)}
                             className="w-full h-full text-center text-sm md:text-lg font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black touch-manipulation"
-                            disabled={isComplete}
+                            disabled={isComplete || isSaving}
                             style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
                           />
                         )}
@@ -394,6 +443,28 @@ export default function PlayPage() {
               ))}
             </tbody>
           </table>
+          
+          {/* Finish Button */}
+          {!isComplete && (
+            <div className="mt-6 text-center">
+              <button
+                onClick={handleFinish}
+                disabled={isSaving || !answers.every((a) => a !== null)}
+                className={`px-8 py-4 rounded-lg font-bold text-lg md:text-xl transition-all touch-manipulation ${
+                  answers.every((a) => a !== null) && !isSaving
+                    ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg hover:scale-105'
+                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                }`}
+              >
+                {isSaving ? '保存中...' : '終了して結果を見る'}
+              </button>
+              {!answers.every((a) => a !== null) && (
+                <p className="text-sm text-gray-600 mt-2">
+                  すべてのマスに入力してください
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Completion Message */}
