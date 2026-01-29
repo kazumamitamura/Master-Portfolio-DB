@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
 import Link from 'next/link'
@@ -13,6 +13,7 @@ export default function AdminAuthPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [showPasswordReset, setShowPasswordReset] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,7 +21,18 @@ export default function AdminAuthPage() {
     confirmPassword: '',
   })
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createSupabaseClient()
+
+  // URLパラメータでパスワードリセットモードをチェック
+  useEffect(() => {
+    const reset = searchParams.get('reset')
+    const type = searchParams.get('type')
+    if (reset === 'true' || type === 'recovery') {
+      setIsLogin(true)
+      setSuccess('パスワードをリセットしてください。新しいパスワードを入力してください。')
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,8 +110,11 @@ export default function AdminAuthPage() {
       let errorMessage = 'エラーが発生しました'
       
       if (err.message) {
-        if (err.message.includes('already registered') || err.message.includes('already exists')) {
-          errorMessage = 'このメールアドレスは既に登録されています。ログインしてください。'
+        if (err.message.includes('already registered') || err.message.includes('already exists') || err.message.includes('User already registered')) {
+          errorMessage = 'このメールアドレスは既に登録されています。パスワードが設定されていない場合は「パスワードを設定する」ボタンを使用してください。'
+          setError(errorMessage)
+          setShowPasswordReset(true)
+          return
         } else if (err.message.includes('Invalid login credentials')) {
           errorMessage = 'メールアドレスまたはパスワードが正しくありません。'
         } else if (err.message.includes('Password')) {
@@ -126,17 +141,56 @@ export default function AdminAuthPage() {
     setLoading(true)
     setError(null)
     setSuccess(null)
+    setShowPasswordReset(false)
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-        redirectTo: `${window.location.origin}/admin/auth?reset=true`,
+        redirectTo: `${window.location.origin}/admin/auth?reset=true&type=recovery`,
       })
 
       if (error) throw error
 
-      setSuccess('パスワードリセット用のメールを送信しました。メールボックスを確認してください。')
+      setSuccess('パスワード設定用のメールを送信しました。メールボックスを確認して、リンクをクリックしてください。')
     } catch (err: any) {
       setError(err.message || 'パスワードリセットに失敗しました。')
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!formData.password || formData.password.length < 6) {
+      setError('パスワードは6文字以上である必要があります。')
+      return
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError('パスワードが一致しません。')
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: formData.password
+      })
+
+      if (error) throw error
+
+      setSuccess('パスワードが設定されました！ログインしてください。')
+      setFormData({ ...formData, password: '', confirmPassword: '' })
+      // 3秒後にログインモードに切り替え
+      setTimeout(() => {
+        setIsLogin(true)
+        router.push('/admin/auth')
+      }, 3000)
+    } catch (err: any) {
+      setError(err.message || 'パスワードの設定に失敗しました。')
     } finally {
       setLoading(false)
     }
@@ -174,6 +228,17 @@ export default function AdminAuthPage() {
             className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
           >
             {error}
+            {showPasswordReset && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-all"
+                >
+                  パスワードを設定する（メール送信）
+                </button>
+              </div>
+            )}
           </motion.div>
         )}
 
@@ -187,7 +252,71 @@ export default function AdminAuthPage() {
           </motion.div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {(searchParams.get('reset') === 'true' || searchParams.get('type') === 'recovery') ? (
+          <form onSubmit={handleUpdatePassword} className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded mb-4">
+              <p className="font-semibold mb-1">パスワードを設定してください</p>
+              <p className="text-sm">新しいパスワードを入力してください。</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                メールアドレス
+              </label>
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                placeholder="mitamuraka@haguroko.ed.jp"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                新しいパスワード
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                placeholder="••••••••"
+                minLength={6}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                パスワード（確認）
+              </label>
+              <input
+                type="password"
+                required
+                value={formData.confirmPassword}
+                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-black"
+                placeholder="••••••••"
+                minLength={6}
+              />
+            </div>
+
+            <motion.button
+              type="submit"
+              disabled={loading || formData.password !== formData.confirmPassword}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? '設定中...' : 'パスワードを設定'}
+            </motion.button>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -271,11 +400,31 @@ export default function AdminAuthPage() {
         {isLogin && (
           <div className="mt-4">
             <button
+              type="button"
               onClick={handlePasswordReset}
               disabled={loading || !isAdminEmail(formData.email)}
               className="w-full text-sm text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              パスワードを忘れた場合
+              パスワードを忘れた場合 / パスワードを設定する
+            </button>
+          </div>
+        )}
+        
+        {!isLogin && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-600 mb-2">
+              既にメールアドレスが登録されている場合は、パスワードリセット機能を使用してください。
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(true)
+                handlePasswordReset()
+              }}
+              disabled={loading || !isAdminEmail(formData.email)}
+              className="w-full text-sm text-indigo-600 hover:text-indigo-800 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              パスワードを設定する（既存アカウント用）
             </button>
           </div>
         )}
