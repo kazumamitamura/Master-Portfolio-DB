@@ -83,35 +83,65 @@ export function calculateAnswer(
 
 export function generateRowValues(level: number): number[] {
   const values: number[] = []
+  const usedValues = new Set<number>()
+  
   for (let i = 0; i < 10; i++) {
-    if (level === 1) {
-      values.push(Math.floor(Math.random() * 9) + 1)
-    } else if (level === 3) {
-      // For multiplication, use 1-9
-      values.push(Math.floor(Math.random() * 9) + 1)
-    } else {
-      values.push(Math.floor(Math.random() * 99) + 1)
-    }
+    let value: number
+    let attempts = 0
+    const maxAttempts = 100
+    
+    do {
+      if (level === 1) {
+        // Level 1: 1-9, no duplicates
+        value = Math.floor(Math.random() * 9) + 1
+      } else if (level === 3) {
+        // Level 3: 1-9 for multiplication, no duplicates
+        value = Math.floor(Math.random() * 9) + 1
+      } else {
+        // Level 2, 4: 1-99, no duplicates
+        value = Math.floor(Math.random() * 99) + 1
+      }
+      attempts++
+    } while (usedValues.has(value) && attempts < maxAttempts)
+    
+    values.push(value)
+    usedValues.add(value)
   }
+  
   return values
 }
 
 export function generateColValues(level: number, rowValues?: number[]): number[] {
   const values: number[] = []
+  const usedValues = new Set<number>()
+  
   for (let i = 0; i < 5; i++) {
-    if (level === 1) {
-      values.push(Math.floor(Math.random() * 9) + 1)
-    } else if (level === 2) {
-      // For subtraction, ensure column values are smaller than row values
-      // Generate values that will result in non-negative answers
-      const maxRowValue = rowValues ? Math.max(...rowValues) : 99
-      values.push(Math.floor(Math.random() * Math.min(maxRowValue, 50)) + 1)
-    } else if (level === 3) {
-      // For multiplication, use 1-9
-      values.push(Math.floor(Math.random() * 9) + 1)
-    } else {
-      values.push(Math.floor(Math.random() * 99) + 1)
-    }
+    let value: number
+    let attempts = 0
+    const maxAttempts = 100
+    
+    do {
+      if (level === 1) {
+        // Level 1: 1-9, no duplicates
+        value = Math.floor(Math.random() * 9) + 1
+      } else if (level === 2) {
+        // For subtraction, ensure column values are smaller than row values
+        // Generate values that will result in non-negative answers
+        const maxRowValue = rowValues ? Math.max(...rowValues) : 99
+        value = Math.floor(Math.random() * Math.min(maxRowValue, 50)) + 1
+      } else if (level === 3) {
+        // Level 3: 1-9 for multiplication, no duplicates
+        value = Math.floor(Math.random() * 9) + 1
+      } else {
+        // Level 4: 1-99, no duplicates
+        value = Math.floor(Math.random() * 99) + 1
+      }
+      attempts++
+    } while (usedValues.has(value) && attempts < maxAttempts)
+    
+    values.push(value)
+    usedValues.add(value)
   }
+  
   return values
 }

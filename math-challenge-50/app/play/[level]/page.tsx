@@ -156,44 +156,54 @@ export default function PlayPage() {
 
     const timeSeconds = Math.floor((Date.now() - (startTime || 0)) / 1000)
 
-    // Check if perfect score for celebration
+    // Save result (always save, not just for perfect score)
     const { data: { user } } = await supabase.auth.getUser()
-    if (user && correct === 50) {
-      // Check if this is a new best time
-      const { data: bestResult } = await supabase
-        .from('game_results')
-        .select('time_seconds')
-        .eq('user_id', user.id)
-        .eq('level', level)
-        .eq('score', 50)
-        .order('time_seconds', { ascending: true })
-        .limit(1)
-        .single()
+    if (user) {
+      // Check if this is a new best time (for perfect score)
+      if (correct === 50) {
+        const { data: bestResult } = await supabase
+          .from('game_results')
+          .select('time_seconds')
+          .eq('user_id', user.id)
+          .eq('level', level)
+          .eq('score', 50)
+          .order('time_seconds', { ascending: true })
+          .limit(1)
+          .single()
 
-      if (!bestResult || timeSeconds < bestResult.time_seconds) {
-        setShowNewRecord(true)
-        // Confetti celebration for new record
+        if (!bestResult || timeSeconds < bestResult.time_seconds) {
+          setShowNewRecord(true)
+          // Confetti celebration for new record
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+          })
+        } else {
+          // Confetti for perfect score
+          confetti({
+            particleCount: 50,
+            spread: 50,
+            origin: { y: 0.6 }
+          })
+        }
+      } else if (correct >= 40) {
+        // Confetti for good score (80% or more)
         confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        })
-      } else {
-        // Confetti for perfect score
-        confetti({
-          particleCount: 50,
-          spread: 50,
+          particleCount: 30,
+          spread: 40,
           origin: { y: 0.6 }
         })
       }
 
-      // Save result
+      // Save result (all scores)
       await supabase.from('game_results').insert({
         user_id: user.id,
         level,
         score: correct,
         time_seconds: timeSeconds,
-        mistakes: incorrect,
+        correct_count: correct,
+        incorrect_count: incorrect,
       })
     }
   }
@@ -238,7 +248,7 @@ export default function PlayPage() {
           <Link href="/dashboard">
             <button className="flex items-center gap-2 text-white hover:text-yellow-200 transition-colors text-sm md:text-base">
               <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
-              ゲームへ移動
+              ダッシュボードへ移動
             </button>
           </Link>
           <div className="text-white text-xl md:text-2xl font-bold">
@@ -387,7 +397,7 @@ export default function PlayPage() {
             </p>
             <Link href="/dashboard">
               <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors text-sm md:text-base touch-manipulation">
-                ゲームへ移動
+                ダッシュボードへ移動
               </button>
             </Link>
           </motion.div>
