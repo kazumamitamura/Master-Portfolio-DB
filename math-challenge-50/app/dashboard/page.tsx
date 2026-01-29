@@ -157,6 +157,58 @@ export default function DashboardPage() {
     )
   }
 
+  // Custom Mode Selector Component
+  const CustomModeSelector = () => {
+    const [cellCount, setCellCount] = useState(50)
+    const [selectedLevel, setSelectedLevel] = useState(1)
+
+    const handleStartCustom = () => {
+      router.push(`/play/${selectedLevel}?cells=${cellCount}`)
+    }
+
+    return (
+      <div className="space-y-4">
+        <div>
+          <label className="block text-white font-semibold mb-2">マスの数: {cellCount}</label>
+          <input
+            type="range"
+            min="10"
+            max="100"
+            step="10"
+            value={cellCount}
+            onChange={(e) => setCellCount(parseInt(e.target.value))}
+            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
+          />
+          <div className="flex justify-between text-white/70 text-sm mt-1">
+            <span>10</span>
+            <span>50</span>
+            <span>100</span>
+          </div>
+        </div>
+        <div>
+          <label className="block text-white font-semibold mb-2">レベル</label>
+          <select
+            value={selectedLevel}
+            onChange={(e) => setSelectedLevel(parseInt(e.target.value))}
+            className="w-full px-4 py-2 rounded-lg bg-white/20 text-white border border-white/30 focus:outline-none focus:ring-2 focus:ring-white"
+          >
+            {levels.map((level) => (
+              <option key={level.id} value={level.id} className="bg-purple-600">
+                Level {level.id} - {level.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          onClick={handleStartCustom}
+          className="w-full bg-white/20 hover:bg-white/30 text-white font-bold py-3 px-6 rounded-lg transition-all text-center"
+        >
+          {cellCount}マスで挑戦する →
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -208,6 +260,21 @@ export default function DashboardPage() {
               ログアウト
             </button>
           </div>
+        </motion.div>
+
+        {/* Custom Mode Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-6 shadow-2xl mb-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-3xl font-bold text-white">カスタムモード</h2>
+            <Settings className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-white/90 mb-4">マスの数を10から100まで選択できます</p>
+          <CustomModeSelector />
         </motion.div>
 
         {/* Level Cards */}

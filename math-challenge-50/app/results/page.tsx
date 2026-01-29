@@ -14,6 +14,7 @@ interface GameResult {
   score: number
   time_seconds: number
   mistakes: number
+  cell_count: number | null
   created_at: string
 }
 
@@ -24,6 +25,7 @@ interface LevelStats {
   totalAttempts: number
   bestTime: number | null
   bestScore: number
+  cellCount: number
   recentResults: GameResult[]
   improvement: number | null // Percentage improvement
 }
@@ -86,18 +88,23 @@ export default function ResultsPage() {
       }
 
       setTotalGames(results?.length || 0)
-      setPerfectScores(results?.filter(r => r.score === 50).length || 0)
+      // Count perfect scores (score equals cell_count)
+      setPerfectScores(results?.filter(r => r.score === (r.cell_count || 50)).length || 0)
 
       // Calculate stats for each level
       const stats: LevelStats[] = levels.map(level => {
         const levelResults = results?.filter(r => r.level === level.id) || []
-        const perfectResults = levelResults.filter(r => r.score === 50)
+        // Filter perfect results (score equals cell_count, default to 50 for standard mode)
+        const perfectResults = levelResults.filter(r => r.score === (r.cell_count || 50))
         const bestTime = perfectResults.length > 0
           ? Math.min(...perfectResults.map(r => r.time_seconds))
           : null
         const bestScore = levelResults.length > 0
           ? Math.max(...levelResults.map(r => r.score))
           : 0
+        const cellCount = levelResults.length > 0 
+          ? (levelResults[0].cell_count || 50)
+          : 50
 
         // Calculate improvement (compare last 5 vs previous 5)
         let improvement: number | null = null
@@ -118,6 +125,7 @@ export default function ResultsPage() {
           totalAttempts: levelResults.length,
           bestTime,
           bestScore,
+          cellCount,
           recentResults: levelResults.slice(0, 10),
           improvement,
         }
@@ -279,7 +287,7 @@ export default function ResultsPage() {
                     <span className="text-white/90 text-sm">最高スコア</span>
                   </div>
                   <p className="text-2xl font-bold text-white">
-                    {stat.bestScore} / 50
+                    {stat.bestScore} / {stat.cellCount || 50}
                   </p>
                 </div>
               </div>
@@ -299,12 +307,15 @@ export default function ResultsPage() {
                           </span>
                           <span
                             className={`font-bold ${
-                              result.score === 50 ? 'text-yellow-300' : 'text-white'
+                              result.score === (result.cell_count || 50) ? 'text-yellow-300' : 'text-white'
                             }`}
                           >
-                            {result.score} / 50
+                            {result.score} / {result.cell_count || 50}
+                            {result.cell_count && result.cell_count !== 50 && (
+                              <span className="text-xs ml-1">({result.cell_count}マス)</span>
+                            )}
                           </span>
-                          {result.score === 50 && (
+                          {result.score === (result.cell_count || 50) && (
                             <span className="text-white/80 text-sm">
                               {formatTime(result.time_seconds)}
                             </span>

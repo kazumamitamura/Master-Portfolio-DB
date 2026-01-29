@@ -16,7 +16,7 @@ export interface GameState {
   currentIndex: number
 }
 
-export function generateQuestions(level: number): Question[] {
+export function generateQuestions(level: number, cellCount: number = 50): Question[] {
   const questions: Question[] = []
 
   // Determine operation for each level
@@ -25,9 +25,18 @@ export function generateQuestions(level: number): Question[] {
   // Level 3: all multiplication
   // Level 4: mixed (random per cell)
 
-  // Generate 50 questions (10x5 grid)
-  for (let row = 0; row < 10; row++) {
-    for (let col = 0; col < 5; col++) {
+  // Calculate grid dimensions based on cell count
+  // Try to make it as square as possible
+  const cols = Math.ceil(Math.sqrt(cellCount))
+  const rows = Math.ceil(cellCount / cols)
+  const actualCellCount = rows * cols
+
+  // Generate questions based on calculated grid
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      // Stop if we've reached the desired cell count
+      if (questions.length >= cellCount) break
+
       let operation: Operation
 
       if (level === 4) {
@@ -58,6 +67,7 @@ export function generateQuestions(level: number): Question[] {
         operation,
       })
     }
+    if (questions.length >= cellCount) break
   }
 
   return questions
@@ -81,11 +91,11 @@ export function calculateAnswer(
   }
 }
 
-export function generateRowValues(level: number): number[] {
+export function generateRowValues(level: number, rowCount: number = 10): number[] {
   const values: number[] = []
   const usedValues = new Set<number>()
   
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < rowCount; i++) {
     let value: number
     let attempts = 0
     const maxAttempts = 100
@@ -111,11 +121,11 @@ export function generateRowValues(level: number): number[] {
   return values
 }
 
-export function generateColValues(level: number, rowValues?: number[]): number[] {
+export function generateColValues(level: number, colCount: number = 5, rowValues?: number[]): number[] {
   const values: number[] = []
   const usedValues = new Set<number>()
   
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < colCount; i++) {
     let value: number
     let attempts = 0
     const maxAttempts = 100

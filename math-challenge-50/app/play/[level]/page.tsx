@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import confetti from 'canvas-confetti'
 import { createSupabaseClient } from '@/lib/supabaseClient'
@@ -9,17 +9,21 @@ import { generateRowValues, generateColValues, generateQuestions, calculateAnswe
 import { formatTime, calculateProgress } from '@/lib/utils'
 import { ArrowLeft, Trophy } from 'lucide-react'
 import Link from 'next/link'
+import { Suspense } from 'react'
 
-export default function PlayPage() {
+function PlayPageContent() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const level = parseInt(params.level as string)
+  const cellCountParam = searchParams.get('cells')
+  const cellCount = cellCountParam ? parseInt(cellCountParam) : 50
   const supabase = createSupabaseClient()
 
   const [rowValues, setRowValues] = useState<number[]>([])
   const [colValues, setColValues] = useState<number[]>([])
   const [questions, setQuestions] = useState<any[]>([])
-  const [answers, setAnswers] = useState<(number | null)[]>(Array(50).fill(null))
+  const [answers, setAnswers] = useState<(number | null)[]>(Array(cellCount).fill(null))
   const [currentIndex, setCurrentIndex] = useState(0)
   const [startTime, setStartTime] = useState<number | null>(null)
   const [elapsedTime, setElapsedTime] = useState(0)
@@ -40,21 +44,26 @@ export default function PlayPage() {
     }
     checkAuth()
 
-    // Initialize game
-    const rows = generateRowValues(level)
-    const cols = generateColValues(level, rows)
-    const qs = generateQuestions(level)
+    // Initialize game with custom cell count
+    const qs = generateQuestions(level, cellCount)
+    // Calculate grid dimensions
+    const cols = Math.ceil(Math.sqrt(cellCount))
+    const rows = Math.ceil(cellCount / cols)
+    
+    const generatedRows = generateRowValues(level, rows)
+    const generatedCols = generateColValues(level, cols, generatedRows)
 
-    setRowValues(rows)
-    setColValues(cols)
+    setRowValues(generatedRows)
+    setColValues(generatedCols)
     setQuestions(qs)
+    setAnswers(Array(cellCount).fill(null))
     setStartTime(Date.now())
 
     // Focus first input
     setTimeout(() => {
       inputRefs.current[0]?.focus()
     }, 100)
-  }, [level, router, supabase])
+  }, [level, cellCount, router, supabase])
 
   useEffect(() => {
     if (startTime && !isComplete) {
@@ -93,17 +102,20 @@ export default function PlayPage() {
   }
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    const cols = Math.ceil(Math.sqrt(cellCount))
+    const maxIndex = cellCount - 1
+    
     // Enter or Tab: move to next field
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault()
-      if (index < 49) {
+      if (index < maxIndex) {
         setTimeout(() => {
           inputRefs.current[index + 1]?.focus()
         }, 10)
       }
     }
     // Arrow keys: navigate
-    else if (e.key === 'ArrowRight' && index < 49) {
+    else if (e.key === 'ArrowRight' && index < maxIndex) {
       e.preventDefault()
       inputRefs.current[index + 1]?.focus()
     }
@@ -111,19 +123,21 @@ export default function PlayPage() {
       e.preventDefault()
       inputRefs.current[index - 1]?.focus()
     }
-    else if (e.key === 'ArrowDown' && index < 45) {
+    else if (e.key === 'ArrowDown' && index < maxIndex - cols + 1) {
       e.preventDefault()
-      inputRefs.current[index + 5]?.focus()
+      const nextIndex = Math.min(index + cols, maxIndex)
+      inputRefs.current[nextIndex]?.focus()
     }
-    else if (e.key === 'ArrowUp' && index >= 5) {
+    else if (e.key === 'ArrowUp' && index >= cols) {
       e.preventDefault()
-      inputRefs.current[index - 5]?.focus()
+      inputRefs.current[index - cols]?.focus()
     }
   }
 
   const handleBlur = (index: number) => {
+    const maxIndex = cellCount - 1
     // When field loses focus, move to next if current field has a value
-    if (index < 49 && answers[index] !== null && answers[index] !== undefined) {
+    if (index < maxIndex && answers[index] !== null && answers[index] !== undefined) {
       // Small delay to allow for potential click on next field
       setTimeout(() => {
         // Only move if next field is empty and current field has value
@@ -171,13 +185,14 @@ export default function PlayPage() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       // Check if this is a new best time (for perfect score)
-      if (correct === 50) {
+      if (correct === cellCount) {
         const { data: bestResult } = await supabase
           .from('game_results')
           .select('time_seconds')
           .eq('user_id', user.id)
           .eq('level', level)
-          .eq('score', 50)
+          .eq('score', cellCount)
+          .eq('cell_count', cellCount)
           .order('time_seconds', { ascending: true })
           .limit(1)
           .single()
@@ -198,7 +213,7 @@ export default function PlayPage() {
             origin: { y: 0.6 }
           })
         }
-      } else if (correct >= 40) {
+      } else if (correct >= cellCount * 0.8) {
         // Confetti for good score (80% or more)
         confetti({
           particleCount: 30,
@@ -216,6 +231,7 @@ export default function PlayPage() {
           score: correct,
           time_seconds: timeSeconds,
           mistakes: incorrect,
+          cell_count: cellCount,
         }).select()
 
         if (insertError) {
@@ -307,13 +323,13 @@ export default function PlayPage() {
               {formatTime(elapsedTime)}
             </div>
             <div className="text-white text-base md:text-xl">
-              正解: {correctCount} / 50
+              正解: {correctCount} / {cellCount}
             </div>
           </div>
           <motion.div
             className="h-4 bg-white/30 rounded-full overflow-hidden"
             initial={{ width: 0 }}
-            animate={{ width: `${calculateProgress(correctCount)}%` }}
+            animate={{ width: `${calculateProgress(correctCount, cellCount)}%` }}
             transition={{ duration: 0.3 }}
           >
             <motion.div
@@ -376,14 +392,17 @@ export default function PlayPage() {
               </tr>
             </thead>
             <tbody>
-              {rowValues.map((rowVal, row) => (
-                <tr key={row}>
-                  <td className="w-12 md:w-20 h-12 md:h-16 border-2 border-gray-300 bg-blue-100 font-bold text-sm md:text-lg text-center text-black">
-                    {rowVal}
-                  </td>
-                  {colValues.map((colVal, col) => {
-                    const index = row * 5 + col
-                    const question = questions[index]
+              {rowValues.map((rowVal, row) => {
+                const cols = Math.ceil(Math.sqrt(cellCount))
+                return (
+                  <tr key={row}>
+                    <td className="w-12 md:w-20 h-12 md:h-16 border-2 border-gray-300 bg-blue-100 font-bold text-sm md:text-lg text-center text-black">
+                      {rowVal}
+                    </td>
+                    {colValues.map((colVal, col) => {
+                      const index = row * cols + col
+                      if (index >= cellCount) return null
+                      const question = questions[index]
                     const isCorrect = isCellCorrect(row, col)
                     const operation = getOperationSymbol(question)
 
@@ -423,7 +442,7 @@ export default function PlayPage() {
                             }}
                             onKeyDown={(e) => {
                               // Prevent Enter key from submitting on last cell
-                              if (index === 49 && e.key === 'Enter') {
+                              if (index === cellCount - 1 && e.key === 'Enter') {
                                 e.preventDefault()
                                 // Don't auto-submit, let user click finish button
                                 return
@@ -438,9 +457,10 @@ export default function PlayPage() {
                         )}
                       </td>
                     )
-                  })}
-                </tr>
-              ))}
+                      })}
+                    </tr>
+                  )
+                })}
             </tbody>
           </table>
           
@@ -479,7 +499,7 @@ export default function PlayPage() {
               {correctCount === 50 ? '完璧！🎉' : 'お疲れ様でした！'}
             </h2>
             <p className="text-xl mb-4">
-              正解数: {correctCount} / 50
+              正解数: {correctCount} / {cellCount}
             </p>
             <p className="text-lg mb-6">
               タイム: {formatTime(elapsedTime)}
@@ -493,5 +513,17 @@ export default function PlayPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PlayPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 flex items-center justify-center">
+        <div className="text-white text-2xl font-bold">読み込み中...</div>
+      </div>
+    }>
+      <PlayPageContent />
+    </Suspense>
   )
 }
