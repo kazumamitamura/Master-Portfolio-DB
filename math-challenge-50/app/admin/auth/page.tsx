@@ -395,7 +395,8 @@ export default function AdminAuthPage() {
           >
             {loading ? '処理中...' : isLogin ? 'ログイン' : '登録する'}
           </motion.button>
-        </form>
+          </form>
+        )}
 
         {isLogin && (
           <div className="mt-4">
