@@ -75,6 +75,44 @@ npm run build:math
 npm run install:all
 ```
 
+## GitHub連携
+
+このリポジトリはGitHubと連携されています。
+
+### 初回セットアップ
+
+1. GitHubでリポジトリを作成:
+   - [GitHub](https://github.com)にログイン
+   - 新しいリポジトリ `Master-Portfolio-DB` を作成
+   - READMEの初期化は**しない**（既に存在します）
+
+2. リモートリポジトリは既に設定済み:
+   ```bash
+   git remote -v
+   # origin  https://github.com/kazumamitamura/Master-Portfolio-DB.git
+   ```
+
+3. 初回プッシュ:
+   ```bash
+   cd Master-Portfolio-DB
+   git push -u origin main
+   ```
+
+### 今後の作業フロー
+
+```bash
+# 変更をステージング
+git add .
+
+# コミット
+git commit -m "コミットメッセージ"
+
+# GitHubにプッシュ
+git push origin main
+```
+
+詳細は `GITHUB_SETUP.md` を参照してください。
+
 ## ライセンス
 
 各プロジェクトは個別にライセンスが設定されています。詳細は各プロジェクトのREADMEを参照してください。

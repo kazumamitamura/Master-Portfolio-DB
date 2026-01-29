@@ -50,34 +50,54 @@ export default function DashboardPage() {
       // Load profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('name, grade, class_name')
+        .select('full_name, grade, class_name')
         .eq('id', user.id)
         .single()
 
       if (profileData) {
-        setProfile(profileData)
+        setProfile({
+          name: profileData.full_name,
+          grade: profileData.grade,
+          class_name: profileData.class_name,
+        })
       }
 
-      // Load progress
-      const { data: progressData } = await supabase
-        .from('user_progress')
-        .select('*')
+      // Load progress from game_results
+      // Check which levels are unlocked (score = 50 means completed)
+      const { data: completedLevels } = await supabase
+        .from('game_results')
+        .select('level')
         .eq('user_id', user.id)
-        .single()
+        .eq('score', 50)
 
-      if (progressData) {
-        setProgress(progressData)
-      } else {
-        // Initialize progress if not exists
-        const { data: newProgress } = await supabase
-          .from('user_progress')
-          .insert({ user_id: user.id })
-          .select()
-          .single()
-        if (newProgress) {
-          setProgress(newProgress)
+      const completedLevelSet = new Set(completedLevels?.map(r => r.level) || [])
+      
+      // Get best times for each level
+      const { data: bestTimes } = await supabase
+        .from('game_results')
+        .select('level, time_seconds')
+        .eq('user_id', user.id)
+        .eq('score', 50)
+        .order('time_seconds', { ascending: true })
+
+      const bestTimeMap = new Map<number, number>()
+      bestTimes?.forEach(result => {
+        if (!bestTimeMap.has(result.level) || bestTimeMap.get(result.level)! > result.time_seconds) {
+          bestTimeMap.set(result.level, result.time_seconds)
         }
-      }
+      })
+
+      // Set progress based on completed levels
+      setProgress({
+        level_1_unlocked: true, // Level 1 is always unlocked
+        level_2_unlocked: completedLevelSet.has(1),
+        level_3_unlocked: completedLevelSet.has(2),
+        level_4_unlocked: completedLevelSet.has(3),
+        best_time_level_1: bestTimeMap.get(1) || null,
+        best_time_level_2: bestTimeMap.get(2) || null,
+        best_time_level_3: bestTimeMap.get(3) || null,
+        best_time_level_4: bestTimeMap.get(4) || null,
+      })
 
       setLoading(false)
     }

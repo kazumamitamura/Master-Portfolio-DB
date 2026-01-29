@@ -43,9 +43,20 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 ```
 
-### 4. データベーススキーマの適用
+### 4. データベーススキーマの適用 ⭐ **重要**
 
-SupabaseのSQL Editorで`supabase_schema.sql`の内容を実行してください。
+**SQLの実行場所**: Supabase Dashboardの**SQL Editor**で実行します。**フォルダを選ぶ必要はありません。**
+
+**実行手順**:
+1. Supabase Dashboardにアクセス
+2. 左サイドバーの「**SQL Editor**」をクリック
+3. 「New query」をクリック
+4. `supabase_schema_simple.sql` または `supabase_schema.sql` の内容をコピー＆ペースト
+5. 「Run」ボタンをクリック（または `Ctrl+Enter`）
+
+詳細は以下のファイルを参照してください：
+- **SQL実行方法**: `SQL_EXECUTION_GUIDE.md` ⭐ **まずこちらを読んでください**
+- **詳細なセットアップ**: `SUPABASE_SETUP.md`
 
 ### 5. 開発サーバーの起動
 

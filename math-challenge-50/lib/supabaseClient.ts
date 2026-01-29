@@ -1,30 +1,23 @@
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { createClient } from '@supabase/supabase-js'
-import { cookies } from 'next/headers'
+import { createBrowserClient } from '@supabase/ssr'
 
-// Client-side Supabase client
+// Client-side Supabase client (for use in Client Components)
 export const createSupabaseClient = () => {
-  return createClientComponentClient()
-}
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-// Server-side Supabase client
-export const createSupabaseServerClient = () => {
-  return createServerComponentClient({ cookies })
-}
-
-// Admin client (for service role operations)
-export const createSupabaseAdminClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error('Missing Supabase environment variables')
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error(
+      'Missing Supabase environment variables. Please check your .env.local file.\n' +
+      'Required: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY'
+    )
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
-  })
+  if (!supabaseUrl.startsWith('http://') && !supabaseUrl.startsWith('https://')) {
+    throw new Error(
+      `Invalid SUPABASE_URL: "${supabaseUrl}". Must be a valid HTTP or HTTPS URL.\n` +
+      'Please check your .env.local file and ensure NEXT_PUBLIC_SUPABASE_URL is set correctly.'
+    )
+  }
+
+  return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }

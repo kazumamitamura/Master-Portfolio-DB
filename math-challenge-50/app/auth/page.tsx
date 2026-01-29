@@ -54,10 +54,10 @@ export default function AuthPage() {
             .from('profiles')
             .insert({
               id: authData.user.id,
-              name: formData.name,
+              full_name: formData.name,
               grade: parseInt(formData.grade),
               class_name: formData.className,
-              email: formData.email,
+              role: 'student', // デフォルトでstudent
             })
 
           if (profileError) throw profileError
@@ -66,7 +66,24 @@ export default function AuthPage() {
         }
       }
     } catch (err: any) {
-      setError(err.message || 'エラーが発生しました')
+      // エラーメッセージを日本語で分かりやすく表示
+      let errorMessage = 'エラーが発生しました'
+      
+      if (err.message) {
+        if (err.message.includes('already registered') || err.message.includes('already exists')) {
+          errorMessage = 'このメールアドレスは既に登録されています。ログインしてください。'
+        } else if (err.message.includes('Invalid login credentials')) {
+          errorMessage = 'メールアドレスまたはパスワードが正しくありません。'
+        } else if (err.message.includes('Password')) {
+          errorMessage = 'パスワードは6文字以上である必要があります。'
+        } else if (err.message.includes('Email')) {
+          errorMessage = '有効なメールアドレスを入力してください。'
+        } else {
+          errorMessage = err.message
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

@@ -14,11 +14,10 @@ interface GameResult {
   level: number
   score: number
   time_seconds: number
-  correct_count: number
-  incorrect_count: number
-  played_at: string
+  mistakes: number
+  created_at: string
   profile: {
-    name: string
+    full_name: string
     grade: number
     class_name: string
   }
@@ -49,11 +48,11 @@ export default function AdminPage() {
       // For now, we'll check if email contains 'admin' or 'teacher'
       const { data: profile } = await supabase
         .from('profiles')
-        .select('email')
+        .select('role')
         .eq('id', user.id)
         .single()
 
-      if (profile?.email?.includes('admin') || profile?.email?.includes('teacher')) {
+      if (profile?.role === 'teacher') {
         setIsAdmin(true)
         loadResults()
       } else {
@@ -99,14 +98,13 @@ export default function AdminPage() {
 
   const handleExportExcel = () => {
     const exportData = filteredResults.map(result => ({
-      日時: new Date(result.played_at).toLocaleString('ja-JP'),
-      名前: result.profile.name,
+      日時: new Date(result.created_at).toLocaleString('ja-JP'),
+      名前: result.profile.full_name,
       学年: result.profile.grade,
       クラス: result.profile.class_name,
       レベル: result.level,
       スコア: result.score,
-      正解数: result.correct_count,
-      不正解数: result.incorrect_count,
+      間違い: result.mistakes,
       タイム: formatTime(result.time_seconds),
     }))
 
@@ -264,7 +262,7 @@ export default function AdminPage() {
               <tbody className="divide-y divide-gray-200">
                 {filteredResults.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-gray-500">
+                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500">
                       結果がありません
                     </td>
                   </tr>
@@ -272,10 +270,10 @@ export default function AdminPage() {
                   filteredResults.map((result) => (
                     <tr key={result.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-sm text-gray-700">
-                        {new Date(result.played_at).toLocaleString('ja-JP')}
+                        {new Date(result.created_at).toLocaleString('ja-JP')}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                        {result.profile.name}
+                        {result.profile.full_name}
                       </td>
                       <td className="px-4 py-3 text-sm text-gray-700">
                         {result.profile.grade}

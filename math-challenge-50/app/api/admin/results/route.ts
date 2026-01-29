@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createSupabaseAdminClient } from '@/lib/supabaseClient'
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabaseServer'
 
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const supabase = createServerComponentClient({ cookies })
+    const supabase = createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is admin (simplified check)
+    // Check if user is teacher
     const { data: profile } = await supabase
       .from('profiles')
-      .select('email')
+      .select('role')
       .eq('id', user.id)
       .single()
 
-    if (!profile?.email?.includes('admin') && !profile?.email?.includes('teacher')) {
+    if (profile?.role !== 'teacher') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -31,12 +29,12 @@ export async function GET(request: NextRequest) {
       .select(`
         *,
         profile:profiles!game_results_user_id_fkey (
-          name,
+          full_name,
           grade,
           class_name
         )
       `)
-      .order('played_at', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
     // Transform data to include profile info
     const transformedResults = data.map((result: any) => ({
       ...result,
-      profile: result.profile || { name: 'Unknown', grade: 0, class_name: 'A' }
+      profile: result.profile || { full_name: 'Unknown', grade: 0, class_name: 'A' }
     }))
 
     return NextResponse.json({ results: transformedResults })

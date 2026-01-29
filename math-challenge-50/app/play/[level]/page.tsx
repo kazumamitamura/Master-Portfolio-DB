@@ -120,27 +120,30 @@ export default function PlayPage() {
 
     const timeSeconds = Math.floor((Date.now() - (startTime || 0)) / 1000)
 
-    // Check if new record
+    // Check if perfect score for celebration
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: progress } = await supabase
-        .from('user_progress')
-        .select(`best_time_level_${level}`)
+    if (user && correct === 50) {
+      // Check if this is a new best time
+      const { data: bestResult } = await supabase
+        .from('game_results')
+        .select('time_seconds')
         .eq('user_id', user.id)
+        .eq('level', level)
+        .eq('score', 50)
+        .order('time_seconds', { ascending: true })
+        .limit(1)
         .single()
 
-      const bestTimeKey = `best_time_level_${level}` as keyof typeof progress
-      const bestTime = progress?.[bestTimeKey] as number | null
-
-      if (correct === 50 && (bestTime === null || timeSeconds < bestTime)) {
+      if (!bestResult || timeSeconds < bestResult.time_seconds) {
         setShowNewRecord(true)
-        // Confetti celebration
+        // Confetti celebration for new record
         confetti({
           particleCount: 100,
           spread: 70,
           origin: { y: 0.6 }
         })
-      } else if (correct === 50) {
+      } else {
+        // Confetti for perfect score
         confetti({
           particleCount: 50,
           spread: 50,
@@ -154,8 +157,7 @@ export default function PlayPage() {
         level,
         score: correct,
         time_seconds: timeSeconds,
-        correct_count: correct,
-        incorrect_count: incorrect,
+        mistakes: incorrect,
       })
     }
   }
