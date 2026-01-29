@@ -35,6 +35,12 @@ const levels = [
   { id: 4, name: 'Master', description: 'ランダムミックス', color: 'from-red-400 to-red-600' },
 ]
 
+interface Profile {
+  name: string
+  grade: number
+  class_name: string
+}
+
 export default function ResultsPage() {
   const router = useRouter()
   const supabase = createSupabaseClient()
@@ -42,6 +48,7 @@ export default function ResultsPage() {
   const [levelStats, setLevelStats] = useState<LevelStats[]>([])
   const [totalGames, setTotalGames] = useState(0)
   const [perfectScores, setPerfectScores] = useState(0)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     const loadResults = async () => {
@@ -49,6 +56,21 @@ export default function ResultsPage() {
       if (!user) {
         router.push('/')
         return
+      }
+
+      // Load profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, name, grade, class_name')
+        .eq('id', user.id)
+        .single()
+
+      if (profileData) {
+        setProfile({
+          name: profileData.full_name || profileData.name || 'ユーザー',
+          grade: profileData.grade || 0,
+          class_name: profileData.class_name || 'A',
+        })
       }
 
       const { data: results, error } = await supabase
@@ -136,9 +158,14 @@ export default function ResultsPage() {
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
               あなたの成績
             </h1>
-            <p className="text-white/90 text-lg">
+            <p className="text-white/90 text-lg mb-2">
               これまでの挑戦を振り返ろう！
             </p>
+            {profile && (
+              <p className="text-black text-base md:text-lg font-semibold bg-white/30 rounded-lg px-4 py-2 inline-block">
+                {profile.grade}年生 {profile.class_name}組
+              </p>
+            )}
           </div>
         </motion.div>
 

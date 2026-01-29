@@ -223,7 +223,7 @@ export default function AdminPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/20 backdrop-blur rounded-2xl p-6 mb-6"
+          className="bg-white/90 backdrop-blur rounded-2xl p-6 mb-6"
         >
           <div className="flex items-center gap-2 mb-4">
             <Upload className="w-5 h-5 text-white" />
@@ -263,19 +263,19 @@ export default function AdminPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/20 backdrop-blur rounded-2xl p-6 mb-6"
+          className="bg-white/90 backdrop-blur rounded-2xl p-6 mb-6"
         >
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-white" />
-            <h2 className="text-xl font-bold text-white">フィルター</h2>
+            <Filter className="w-5 h-5 text-black" />
+            <h2 className="text-xl font-bold text-black">フィルター</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-sm font-medium text-white mb-1">学年</label>
+              <label className="block text-sm font-medium text-black mb-1">学年</label>
               <select
                 value={filters.grade}
                 onChange={(e) => setFilters({ ...filters, grade: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white"
+                className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/90 text-black focus:outline-none focus:ring-2 focus:ring-white"
               >
                 <option value="">全て</option>
                 {[1, 2, 3].map((g) => (
@@ -287,11 +287,11 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-1">クラス</label>
+              <label className="block text-sm font-medium text-black mb-1">クラス</label>
               <select
                 value={filters.className}
                 onChange={(e) => setFilters({ ...filters, className: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white"
+                className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/90 text-black focus:outline-none focus:ring-2 focus:ring-white"
               >
                 <option value="">全て</option>
                 {['LIA', 'LIB', 'L', 'I', 'CA', 'CB', 'CC', 'CD', 'E', 'M', 'A'].map((c) => (
@@ -303,11 +303,11 @@ export default function AdminPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-1">レベル</label>
+              <label className="block text-sm font-medium text-black mb-1">レベル</label>
               <select
                 value={filters.level}
                 onChange={(e) => setFilters({ ...filters, level: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white"
+                className="w-full px-4 py-2 rounded-lg border border-white/30 bg-white/90 text-black focus:outline-none focus:ring-2 focus:ring-white"
               >
                 <option value="">全て</option>
                 {[1, 2, 3, 4].map((l) => (

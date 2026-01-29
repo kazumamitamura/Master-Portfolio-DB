@@ -197,14 +197,18 @@ export default function PlayPage() {
       }
 
       // Save result (all scores)
-      await supabase.from('game_results').insert({
+      // Note: Using 'mistakes' instead of 'incorrect_count' to match schema
+      const { error: insertError } = await supabase.from('game_results').insert({
         user_id: user.id,
         level,
         score: correct,
         time_seconds: timeSeconds,
-        correct_count: correct,
-        incorrect_count: incorrect,
+        mistakes: incorrect,
       })
+
+      if (insertError) {
+        console.error('Error saving result:', insertError)
+      }
     }
   }
 
@@ -297,8 +301,22 @@ export default function PlayPage() {
 
         {/* Game Grid */}
         <div className="bg-white rounded-2xl p-2 md:p-6 shadow-2xl overflow-x-auto">
-          {/* Operation indicator */}
-          <div className="mb-2 md:mb-4 text-center">
+          {/* Operation indicator with instructions */}
+          <div className="mb-4 md:mb-6 text-center">
+            <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 md:p-6 mb-4">
+              <h2 className="text-2xl md:text-4xl font-bold text-blue-900 mb-2">
+                {level === 1 ? '足し算をしましょう！' :
+                 level === 2 ? '引き算をしましょう！' :
+                 level === 3 ? '掛け算をしましょう！' :
+                 'ミックス計算をしましょう！'}
+              </h2>
+              <p className="text-lg md:text-2xl text-blue-700 font-semibold">
+                {level === 1 ? '縦の数字と横の数字を足し算して答えを入力してください' :
+                 level === 2 ? '縦の数字から横の数字を引き算して答えを入力してください' :
+                 level === 3 ? '縦の数字と横の数字を掛け算して答えを入力してください' :
+                 '縦の数字と横の数字で計算して答えを入力してください'}
+              </p>
+            </div>
             <span className="text-lg md:text-2xl font-bold text-gray-700">
               {level === 1 ? '足し算 (+)' :
                level === 2 ? '引き算 (-)' :
