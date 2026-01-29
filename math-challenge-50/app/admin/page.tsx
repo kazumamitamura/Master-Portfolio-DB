@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
-import { Download, LogOut, Filter, Upload } from 'lucide-react'
+import { Download, LogOut, Filter, Upload, BarChart3, Home } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { formatTime } from '@/lib/utils'
+import { isAdminEmail } from '@/lib/adminUtils'
 
 interface GameResult {
   id: string
@@ -46,15 +47,8 @@ export default function AdminPage() {
         return
       }
 
-      // Check if user is admin (you can implement your own admin check logic)
-      // For now, we'll check if email contains 'admin' or 'teacher'
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-      if (profile?.role === 'teacher') {
+      // Check if user is admin by email address
+      if (isAdminEmail(user.email)) {
         setIsAdmin(true)
         loadResults()
       } else {
@@ -199,13 +193,29 @@ export default function AdminPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-white">
             管理画面
           </h1>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
-          >
-            <LogOut className="w-5 h-5" />
-            ログアウト
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+            >
+              <Home className="w-5 h-5" />
+              ダッシュボード
+            </Link>
+            <Link
+              href="/results"
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+            >
+              <BarChart3 className="w-5 h-5" />
+              成績確認
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+            >
+              <LogOut className="w-5 h-5" />
+              ログアウト
+            </button>
+          </div>
         </motion.div>
 
         {/* CSV Upload */}

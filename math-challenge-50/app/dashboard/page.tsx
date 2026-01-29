@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
-import { Lock, Trophy, Clock, LogOut, BarChart3 } from 'lucide-react'
+import { Lock, Trophy, Clock, LogOut, BarChart3, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { formatTime } from '@/lib/utils'
+import { isAdminEmail } from '@/lib/adminUtils'
 
 interface UserProgress {
   level_1_unlocked: boolean
@@ -38,6 +39,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [progress, setProgress] = useState<UserProgress | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -46,6 +48,9 @@ export default function DashboardPage() {
         router.push('/')
         return
       }
+
+      // Check if user is admin
+      setIsAdmin(isAdminEmail(user.email))
 
       // Load profile
       const { data: profileData } = await supabase
@@ -165,6 +170,15 @@ export default function DashboardPage() {
               <BarChart3 className="w-5 h-5" />
               成績を見る
             </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg transition-all font-semibold"
+              >
+                <Settings className="w-5 h-5" />
+                管理画面
+              </Link>
+            )}
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"

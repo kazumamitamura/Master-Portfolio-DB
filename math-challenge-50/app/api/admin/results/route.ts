@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabaseServer'
+import { isAdminEmail } from '@/lib/adminUtils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,14 +12,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Check if user is teacher
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (profile?.role !== 'teacher') {
+    // Check if user is admin by email address
+    if (!isAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
