@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { ArrowLeft, Shield, Mail, Lock } from 'lucide-react'
 import { isAdminEmail } from '@/lib/adminUtils'
 
-export default function AdminAuthPage() {
+function AdminAuthContent() {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -450,5 +450,17 @@ export default function AdminAuthPage() {
         </div>
       </motion.div>
     </div>
+  )
+}
+
+export default function AdminAuthPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-indigo-400 via-purple-500 to-pink-500 flex items-center justify-center">
+        <div className="text-white text-2xl font-bold">読み込み中...</div>
+      </div>
+    }>
+      <AdminAuthContent />
+    </Suspense>
   )
 }
