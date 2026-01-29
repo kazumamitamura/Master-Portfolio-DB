@@ -65,8 +65,9 @@ export default function PlayPage() {
   }, [startTime, isComplete])
 
   const handleAnswerChange = (index: number, value: string) => {
+    // Allow empty string or valid number (including multi-digit)
     const numValue = value === '' ? null : parseInt(value)
-    if (numValue !== null && isNaN(numValue)) return
+    if (value !== '' && (isNaN(numValue) || numValue < 0)) return
 
     const newAnswers = [...answers]
     const oldValue = newAnswers[index]
@@ -86,16 +87,51 @@ export default function PlayPage() {
     })
     setCorrectCount(correct)
 
-    // Auto-focus next input
-    if (index < 49 && value !== '') {
-      setTimeout(() => {
-        inputRefs.current[index + 1]?.focus()
-      }, 50)
-    }
-
     // Check completion
     if (newAnswers.every((a) => a !== null)) {
       checkCompletion(newAnswers)
+    }
+  }
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Enter or Tab: move to next field
+    if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      if (index < 49) {
+        setTimeout(() => {
+          inputRefs.current[index + 1]?.focus()
+        }, 10)
+      }
+    }
+    // Arrow keys: navigate
+    else if (e.key === 'ArrowRight' && index < 49) {
+      e.preventDefault()
+      inputRefs.current[index + 1]?.focus()
+    }
+    else if (e.key === 'ArrowLeft' && index > 0) {
+      e.preventDefault()
+      inputRefs.current[index - 1]?.focus()
+    }
+    else if (e.key === 'ArrowDown' && index < 45) {
+      e.preventDefault()
+      inputRefs.current[index + 5]?.focus()
+    }
+    else if (e.key === 'ArrowUp' && index >= 5) {
+      e.preventDefault()
+      inputRefs.current[index - 5]?.focus()
+    }
+  }
+
+  const handleBlur = (index: number) => {
+    // When field loses focus, move to next if current field has a value
+    if (index < 49 && answers[index] !== null && answers[index] !== undefined) {
+      // Small delay to allow for potential click on next field
+      setTimeout(() => {
+        // Only move if next field is empty and current field has value
+        if (answers[index + 1] === null || answers[index + 1] === undefined) {
+          inputRefs.current[index + 1]?.focus()
+        }
+      }, 200)
     }
   }
 
@@ -195,28 +231,28 @@ export default function PlayPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-600 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-purple-600 p-2 md:p-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4 md:mb-6">
           <Link href="/dashboard">
-            <button className="flex items-center gap-2 text-white hover:text-yellow-200 transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-              ダッシュボードに戻る
+            <button className="flex items-center gap-2 text-white hover:text-yellow-200 transition-colors text-sm md:text-base">
+              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
+              ゲームへ移動
             </button>
           </Link>
-          <div className="text-white text-2xl font-bold">
+          <div className="text-white text-xl md:text-2xl font-bold">
             Level {level}
           </div>
         </div>
 
         {/* Timer and Progress */}
-        <div className="bg-white/20 backdrop-blur rounded-2xl p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="text-white text-4xl font-bold">
+        <div className="bg-white/20 backdrop-blur rounded-2xl p-4 md:p-6 mb-4 md:mb-6">
+          <div className="flex justify-between items-center mb-3 md:mb-4">
+            <div className="text-white text-2xl md:text-4xl font-bold">
               {formatTime(elapsedTime)}
             </div>
-            <div className="text-white text-xl">
+            <div className="text-white text-base md:text-xl">
               正解: {correctCount} / 50
             </div>
           </div>
@@ -250,22 +286,22 @@ export default function PlayPage() {
         </AnimatePresence>
 
         {/* Game Grid */}
-        <div className="bg-white rounded-2xl p-6 shadow-2xl">
+        <div className="bg-white rounded-2xl p-2 md:p-6 shadow-2xl overflow-x-auto">
           {/* Operation indicator */}
-          <div className="mb-4 text-center">
-            <span className="text-2xl font-bold text-gray-700">
+          <div className="mb-2 md:mb-4 text-center">
+            <span className="text-lg md:text-2xl font-bold text-gray-700">
               {level === 1 ? '足し算 (+)' :
                level === 2 ? '引き算 (-)' :
                level === 3 ? '掛け算 (×)' :
                'ミックス (+ - ×)'}
             </span>
           </div>
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse min-w-[400px]">
             <thead>
               <tr>
-                <th className="w-20 h-16 border-2 border-gray-300 bg-gray-100 font-bold text-lg"></th>
+                <th className="w-12 md:w-20 h-12 md:h-16 border-2 border-gray-300 bg-gray-100 font-bold text-sm md:text-lg"></th>
                 {colValues.map((val, col) => (
-                  <th key={col} className="w-20 h-16 border-2 border-gray-300 bg-blue-100 font-bold text-lg">
+                  <th key={col} className="w-12 md:w-20 h-12 md:h-16 border-2 border-gray-300 bg-blue-100 font-bold text-sm md:text-lg text-black">
                     {val}
                   </th>
                 ))}
@@ -274,7 +310,7 @@ export default function PlayPage() {
             <tbody>
               {rowValues.map((rowVal, row) => (
                 <tr key={row}>
-                  <td className="w-20 h-16 border-2 border-gray-300 bg-blue-100 font-bold text-lg text-center">
+                  <td className="w-12 md:w-20 h-12 md:h-16 border-2 border-gray-300 bg-blue-100 font-bold text-sm md:text-lg text-center text-black">
                     {rowVal}
                   </td>
                   {colValues.map((colVal, col) => {
@@ -286,7 +322,7 @@ export default function PlayPage() {
                     return (
                       <td
                         key={col}
-                        className={`w-20 h-16 border-2 border-gray-300 ${
+                        className={`w-12 md:w-20 h-12 md:h-16 border-2 border-gray-300 ${
                           isCorrect === true ? 'bg-green-200' :
                           isCorrect === false ? 'bg-red-200' :
                           'bg-white'
@@ -294,7 +330,7 @@ export default function PlayPage() {
                       >
                         {isComplete ? (
                           <div className="flex items-center justify-center h-full">
-                            <span className="text-lg font-semibold">
+                            <span className="text-sm md:text-lg font-semibold">
                               {answers[index] !== null ? answers[index] : '-'}
                             </span>
                             {isCorrect === false && (
@@ -306,11 +342,21 @@ export default function PlayPage() {
                         ) : (
                           <input
                             ref={(el) => { inputRefs.current[index] = el }}
-                            type="number"
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9]*"
                             value={answers[index] ?? ''}
-                            onChange={(e) => handleAnswerChange(index, e.target.value)}
-                            className="w-full h-full text-center text-lg font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9]/g, '')
+                              if (value === '' || parseInt(value) >= 0) {
+                                handleAnswerChange(index, value)
+                              }
+                            }}
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            onBlur={() => handleBlur(index)}
+                            className="w-full h-full text-center text-sm md:text-lg font-semibold border-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-black touch-manipulation"
                             disabled={isComplete}
+                            style={{ WebkitAppearance: 'none', MozAppearance: 'textfield' }}
                           />
                         )}
                       </td>
@@ -340,8 +386,8 @@ export default function PlayPage() {
               タイム: {formatTime(elapsedTime)}
             </p>
             <Link href="/dashboard">
-              <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-colors">
-                ダッシュボードに戻る
+              <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 md:py-3 px-6 md:px-8 rounded-lg transition-colors text-sm md:text-base touch-manipulation">
+                ゲームへ移動
               </button>
             </Link>
           </motion.div>

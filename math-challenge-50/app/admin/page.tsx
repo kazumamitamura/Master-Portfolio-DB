@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { createSupabaseClient } from '@/lib/supabaseClient'
-import { Download, LogOut, Filter, Upload, BarChart3, Home } from 'lucide-react'
+import { Download, LogOut, Filter, Upload, BarChart3, Home, Gamepad2 } from 'lucide-react'
 import Link from 'next/link'
 import * as XLSX from 'xlsx'
 import { formatTime } from '@/lib/utils'
@@ -197,10 +197,10 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/dashboard"
-              className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-all font-semibold"
             >
-              <Home className="w-5 h-5" />
-              ダッシュボード
+              <Gamepad2 className="w-5 h-5" />
+              ゲームをプレイする
             </Link>
             <Link
               href="/results"
