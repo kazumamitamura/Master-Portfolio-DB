@@ -305,7 +305,7 @@ export default function PlayPage() {
                           </div>
                         ) : (
                           <input
-                            ref={(el) => (inputRefs.current[index] = el)}
+                            ref={(el) => { inputRefs.current[index] = el }}
                             type="number"
                             value={answers[index] ?? ''}
                             onChange={(e) => handleAnswerChange(index, e.target.value)}
