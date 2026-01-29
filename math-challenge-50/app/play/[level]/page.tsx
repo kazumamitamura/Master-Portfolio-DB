@@ -67,7 +67,7 @@ export default function PlayPage() {
   const handleAnswerChange = (index: number, value: string) => {
     // Allow empty string or valid number (including multi-digit)
     const numValue = value === '' ? null : parseInt(value)
-    if (value !== '' && (isNaN(numValue) || numValue < 0)) return
+    if (value !== '' && (numValue === null || isNaN(numValue) || numValue < 0)) return
 
     const newAnswers = [...answers]
     const oldValue = newAnswers[index]
