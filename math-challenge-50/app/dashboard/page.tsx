@@ -50,20 +50,28 @@ export default function DashboardPage() {
       }
 
       // Check if user is admin
-      setIsAdmin(isAdminEmail(user.email))
+      const adminCheck = isAdminEmail(user.email)
+      setIsAdmin(adminCheck)
 
       // Load profile
       const { data: profileData } = await supabase
         .from('profiles')
-        .select('full_name, grade, class_name')
+        .select('full_name, name, grade, class_name')
         .eq('id', user.id)
         .single()
 
       if (profileData) {
         setProfile({
-          name: profileData.full_name,
-          grade: profileData.grade,
-          class_name: profileData.class_name,
+          name: profileData.full_name || profileData.name || '管理者',
+          grade: profileData.grade || 0,
+          class_name: profileData.class_name || 'ADMIN',
+        })
+      } else if (adminCheck) {
+        // 管理者でプロファイルがない場合のデフォルト値
+        setProfile({
+          name: user.email?.split('@')[0] || '管理者',
+          grade: 0,
+          class_name: 'ADMIN',
         })
       }
 
@@ -93,16 +101,18 @@ export default function DashboardPage() {
       })
 
       // Set progress based on completed levels
-      setProgress({
-        level_1_unlocked: true, // Level 1 is always unlocked
-        level_2_unlocked: completedLevelSet.has(1),
-        level_3_unlocked: completedLevelSet.has(2),
-        level_4_unlocked: completedLevelSet.has(3),
+      // 管理者の場合は全レベルをアンロック
+      const progressData = {
+        level_1_unlocked: adminCheck ? true : true, // Level 1 is always unlocked
+        level_2_unlocked: adminCheck ? true : completedLevelSet.has(1),
+        level_3_unlocked: adminCheck ? true : completedLevelSet.has(2),
+        level_4_unlocked: adminCheck ? true : completedLevelSet.has(3),
         best_time_level_1: bestTimeMap.get(1) || null,
         best_time_level_2: bestTimeMap.get(2) || null,
         best_time_level_3: bestTimeMap.get(3) || null,
         best_time_level_4: bestTimeMap.get(4) || null,
-      })
+      }
+      setProgress(progressData)
 
       setLoading(false)
     }
@@ -127,6 +137,8 @@ export default function DashboardPage() {
   }
 
   const isUnlocked = (level: number): boolean => {
+    // 管理者は全レベルアンロック
+    if (isAdmin) return true
     if (!progress) return level === 1
     switch (level) {
       case 1: return progress.level_1_unlocked
@@ -159,10 +171,19 @@ export default function DashboardPage() {
               こんにちは、{profile?.name}さん！
             </h1>
             <p className="text-white/90 text-lg">
-              {profile?.grade}年生 {profile?.class_name}組
+              {isAdmin ? '管理者' : `${profile?.grade}年生 ${profile?.class_name}組`}
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
+              >
+                <Settings className="w-5 h-5" />
+                管理画面
+              </Link>
+            )}
             <Link
               href="/results"
               className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-lg transition-all"
